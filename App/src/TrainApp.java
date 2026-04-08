@@ -1,58 +1,99 @@
 import java.util.ArrayList;
 import java.util.List;
 
-// Base class for all units in the consist
+// Base Abstract Class
 abstract class Bogy {
-    protected String id;
-    protected String type;
+    protected String bogyID;
 
-    public Bogy(String id, String type) {
-        this.id = id;
-        this.type = type;
+    public Bogy(String bogyID) {
+        this.bogyID = bogyID;
     }
 
-    public abstract String getDetails();
+    public String getBogyID() {
+        return bogyID;
+    }
+
+    public abstract void displayInfo();
 }
 
-// Example Passenger Bogie
+// Passenger Bogy implementation
 class PassengerBogy extends Bogy {
+    private String category; // Sleeper, AC Chair, First Class
     private int capacity;
 
-    public PassengerBogy(String id, String subType, int capacity) {
-        super(id, "Passenger (" + subType + ")");
+    public PassengerBogy(String bogyID, String category, int capacity) {
+        super(bogyID);
+        this.category = category;
         this.capacity = capacity;
     }
 
     @Override
-    public String getDetails() {
-        return String.format("[%s] Type: %s | Capacity: %d seats", id, type, capacity);
+    public void displayInfo() {
+        System.out.println("Bogy ID: " + bogyID + " | Category: " + category + " | Capacity: " + capacity);
     }
 }
 
 public class TrainApp {
+    // The 'consist' is managed via an ArrayList for dynamic resizing
     private List<Bogy> consist = new ArrayList<>();
 
-    public void addBogy(Bogy b) {
-        consist.add(b);
+    // UC2: Operation - Add Bogy
+    public void addBogy(Bogy bogy) {
+        consist.add(bogy);
+        System.out.println("Added Bogy: " + bogy.getBogyID());
     }
 
-    public void displaySummary() {
-        System.out.println("=== Train Consist Summary ===");
-        System.out.println("Engine: Locomotive-X1");
-        for (Bogy b : consist) {
-            System.out.println("  |-- " + b.getDetails());
+    // UC2: Operation - Remove Bogy by ID
+    public void removeBogy(String id) {
+        boolean removed = consist.removeIf(b -> b.getBogyID().equalsIgnoreCase(id));
+        if (removed) {
+            System.out.println("Bogy " + id + " has been detached from the consist.");
+        } else {
+            System.out.println("Error: Bogy " + id + " not found.");
         }
-        System.out.println("Total Units: " + (consist.size() + 1));
+    }
+
+    // UC2: Operation - Check if Bogy exists
+    public void findBogy(String id) {
+        boolean exists = false;
+        for (Bogy b : consist) {
+            if (b.getBogyID().equalsIgnoreCase(id)) {
+                System.out.print("Bogy Found: ");
+                b.displayInfo();
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) System.out.println("Bogy " + id + " is not part of this train.");
+    }
+
+    public void showConsist() {
+        System.out.println("\n--- Current Train Consist ---");
+        if (consist.isEmpty()) {
+            System.out.println("The engine is running solo (Empty Consist).");
+        } else {
+            consist.forEach(Bogy::displayInfo);
+        }
+        System.out.println("-----------------------------\n");
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        // Adding initial consist
-        myTrain.addBogy(new PassengerBogy("P101", "Sleeper", 72));
-        myTrain.addBogy(new PassengerBogy("P102", "AC Chair", 56));
+        // 1. Dynamically Adding Passenger Bogies
+        myTrain.addBogy(new PassengerBogy("S1", "Sleeper", 72));
+        myTrain.addBogy(new PassengerBogy("A1", "AC Chair", 56));
+        myTrain.addBogy(new PassengerBogy("F1", "First Class", 24));
 
-        // Display initial state
-        myTrain.displaySummary();
+        myTrain.showConsist();
+
+        // 2. Finding a specific Bogy
+        myTrain.findBogy("A1");
+
+        // 3. Removing a Bogy (e.g., detaching at a junction)
+        myTrain.removeBogy("S1");
+
+        // 4. Final Display
+        myTrain.showConsist();
     }
 }
