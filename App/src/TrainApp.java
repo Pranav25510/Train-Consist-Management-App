@@ -1,90 +1,67 @@
-import java.util.Stack;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 abstract class Bogy {
     protected String bogyID;
+    protected int capacity;
 
-    public Bogy(String bogyID) {
+    public Bogy(String bogyID, int capacity) {
         this.bogyID = bogyID;
+        this.capacity = capacity;
     }
 
-    public String getBogyID() {
-        return bogyID;
-    }
-
-    public abstract void displayInfo();
+    public String getBogyID() { return bogyID; }
+    public int getCapacity() { return capacity; }
 }
 
 class PassengerBogy extends Bogy {
-    private String category;
+    public PassengerBogy(String id, int cap) { super(id, cap); }
+}
 
-    public PassengerBogy(String bogyID, String category) {
-        super(bogyID);
-        this.category = category;
-    }
-
-    @Override
-    public void displayInfo() {
-        System.out.print("[" + bogyID + ":" + category + "]");
-    }
+class GoodsBogy extends Bogy {
+    public GoodsBogy(String id, int cap) { super(id, cap); }
 }
 
 public class TrainApp {
-    // UC5: Using Stack to enforce LIFO (Last-In, First-Out) operations
-    private Stack<Bogy> consist = new Stack<>();
-    private Set<String> registeredIDs = new HashSet<>();
+    // UC6: Key = Bogy ID, Value = Capacity
+    private Map<String, Integer> capacityManifest = new HashMap<>();
 
-    // Operation: Push (Coupling)
-    public void coupleBogy(Bogy bogy) {
-        if (registeredIDs.add(bogy.getBogyID())) {
-            consist.push(bogy);
-            System.out.println("Coupled: " + bogy.getBogyID());
+    public void registerBogy(Bogy bogy) {
+        // Associate the ID with its capacity in the Map
+        capacityManifest.put(bogy.getBogyID(), bogy.getCapacity());
+        System.out.println("Registered " + bogy.getBogyID() + " with capacity: " + bogy.getCapacity());
+    }
+
+    public void getBogyCapacity(String id) {
+        // Efficient lookup using the Key
+        if (capacityManifest.containsKey(id)) {
+            System.out.println("Bogy " + id + " Capacity: " + capacityManifest.get(id));
         } else {
-            System.out.println("Rejected: Duplicate ID " + bogy.getBogyID());
+            System.out.println("Bogy " + id + " not found in manifest.");
         }
     }
 
-    // Operation: Pop (Decoupling the last attached unit)
-    public void decoupleLastBogy() {
-        if (!consist.isEmpty()) {
-            Bogy removed = consist.pop();
-            registeredIDs.remove(removed.getBogyID());
-            System.out.println("Decoupled (LIFO): " + removed.getBogyID());
-        } else {
-            System.out.println("Error: No bogies left to decouple.");
+    public void calculateTotalCapacity() {
+        int total = 0;
+        // Iterating through all values in the Map
+        for (int cap : capacityManifest.values()) {
+            total += cap;
         }
-    }
-
-    public void showConsist() {
-        System.out.println("\n--- Current Shunting State (Stack) ---");
-        if (consist.isEmpty()) {
-            System.out.println("[Engine] < (Empty)");
-        } else {
-            System.out.print("[Engine]");
-            // Elements are displayed in order of insertion
-            for (Bogy b : consist) {
-                System.out.print(" -> ");
-                b.displayInfo();
-            }
-        }
-        System.out.println("\n--------------------------------------\n");
+        System.out.println("\n--- Total Train Capacity: " + total + " units ---");
     }
 
     public static void main(String[] args) {
-        TrainApp yard = new TrainApp();
+        TrainApp myTrain = new TrainApp();
 
-        // Coupling sequence
-        yard.coupleBogy(new PassengerBogy("P1", "Sleeper"));
-        yard.coupleBogy(new PassengerBogy("P2", "AC-Chair"));
-        yard.coupleBogy(new PassengerBogy("P3", "First-Class"));
+        // Registering various types of bogies
+        myTrain.registerBogy(new PassengerBogy("P-101", 72));
+        myTrain.registerBogy(new PassengerBogy("P-102", 56));
+        myTrain.registerBogy(new GoodsBogy("G-501", 1000)); // 1000kg load
 
-        yard.showConsist();
+        // Instant lookup
+        myTrain.getBogyCapacity("P-101");
 
-        // Operational Rollback: Decoupling the last one added (P3)
-        System.out.println("Action: Emergency detachment of the last bogy...");
-        yard.decoupleLastBogy();
-
-        yard.showConsist();
+        // Analytics
+        myTrain.calculateTotalCapacity();
     }
 }
