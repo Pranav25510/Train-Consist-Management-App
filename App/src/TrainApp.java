@@ -1,7 +1,6 @@
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 abstract class Bogy {
     protected String bogyID;
@@ -15,6 +14,7 @@ abstract class Bogy {
     }
 
     public int getCapacity() { return capacity; }
+    public String getType() { return type; }
 
     @Override
     public String toString() {
@@ -31,41 +31,35 @@ public class TrainApp {
 
     public void addBogy(Bogy b) { consist.add(b); }
 
-    // UC7: Sorting logic using a Comparator
-    public void sortBogiesByCapacity() {
-        System.out.println("\n--- Sorting Bogies by Capacity (High to Low) ---");
+    // UC8: Stream API to filter high-capacity bogies
+    public void displayHighCapacityBogies(int threshold) {
+        System.out.println("\n--- Filtering Bogies: Capacity > " + threshold + " ---");
 
-        // Comparator: Compares two bogies and returns (b2 - b1) for descending order
-        Comparator<Bogy> capacityComparator = new Comparator<Bogy>() {
-            @Override
-            public int compare(Bogy b1, Bogy b2) {
-                return Integer.compare(b2.getCapacity(), b1.getCapacity());
-            }
-        };
-
-        Collections.sort(consist, capacityComparator);
+        consist.stream()                                      // 1. Source
+                .filter(b -> b.getCapacity() > threshold)      // 2. Intermediate Operation (Filter)
+                .forEach(System.out::println);                // 3. Terminal Operation
     }
 
-    public void displayConsist() {
-        for (Bogy b : consist) {
-            System.out.println(b);
-        }
+    // UC8: Stream API to get a specific sub-list (e.g., only Sleepers)
+    public List<Bogy> getBogiesByType(String bogyType) {
+        return consist.stream()
+                .filter(b -> b.getType().equalsIgnoreCase(bogyType))
+                .collect(Collectors.toList());          // Terminal operation to store results
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        // Adding bogies with different capacities
         myTrain.addBogy(new PassengerBogy("P101", "Sleeper", 72));
         myTrain.addBogy(new PassengerBogy("P102", "AC Chair", 56));
         myTrain.addBogy(new PassengerBogy("P103", "First Class", 24));
         myTrain.addBogy(new PassengerBogy("P104", "General", 90));
 
-        System.out.println("Original Consist:");
-        myTrain.displayConsist();
+        // Use Case: Find big bogies for a holiday rush
+        myTrain.displayHighCapacityBogies(60);
 
-        // Perform sorting
-        myTrain.sortBogiesByCapacity();
-        myTrain.displayConsist();
+        // Use Case: Find all Sleepers for a night journey report
+        System.out.println("\nSleeper Bogie Report:");
+        myTrain.getBogiesByType("Sleeper").forEach(System.out::println);
     }
 }
