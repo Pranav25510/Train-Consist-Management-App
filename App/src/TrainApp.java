@@ -1,29 +1,25 @@
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 abstract class Bogy {
     protected String bogyID;
-    protected String type; // e.g., Sleeper, AC Chair, Rectangular, Cylindrical
+    protected int capacity;
 
-    public Bogy(String bogyID, String type) {
+    public Bogy(String bogyID, int capacity) {
         this.bogyID = bogyID;
-        this.type = type;
+        this.capacity = capacity;
     }
 
-    public String getType() { return type; }
-
-    @Override
-    public String toString() {
-        return "ID: " + bogyID;
-    }
+    public int getCapacity() { return capacity; }
 }
 
 class PassengerBogy extends Bogy {
-    public PassengerBogy(String id, String type) { super(id, type); }
+    public PassengerBogy(String id, int cap) { super(id, cap); }
 }
 
 class GoodsBogy extends Bogy {
-    public GoodsBogy(String id, String type) { super(id, type); }
+    public GoodsBogy(String id, int cap) { super(id, cap); }
 }
 
 public class TrainApp {
@@ -31,35 +27,30 @@ public class TrainApp {
 
     public void addBogy(Bogy b) { consist.add(b); }
 
-    // UC9: Grouping bogies into a Map by their type
-    public void generateCategorizedReport() {
-        System.out.println("\n--- Generating Categorized Consist Report ---");
+    // UC10: Using Stream.reduce() to aggregate values
+    public void calculateTotalTrainCapacity() {
+        // .reduce(Identity, Accumulator)
+        // 0 is the starting value (Identity)
+        // (sum, bogy) -> sum + bogy.getCapacity() is the Accumulator
+        int totalCapacity = consist.stream()
+                .map(Bogy::getCapacity) // Transform Stream<Bogy> to Stream<Integer>
+                .reduce(0, (sum, capacity) -> sum + capacity);
 
-        // The groupingBy collector organizes elements into a Map
-        Map<String, List<Bogy>> groupedBogies = consist.stream()
-                .collect(Collectors.groupingBy(Bogy::getType));
-
-        // Iterating through the Map to display groups
-        groupedBogies.forEach((type, list) -> {
-            System.out.println("Category: [" + type.toUpperCase() + "]");
-            list.forEach(bogy -> System.out.println("  |-- " + bogy));
-            System.out.println("  Total Count: " + list.size());
-            System.out.println();
-        });
+        System.out.println("=======================================");
+        System.out.println("TOTAL OPERATIONAL CAPACITY: " + totalCapacity);
+        System.out.println("=======================================");
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        // Adding a mix of Passenger and Goods Bogies
-        myTrain.addBogy(new PassengerBogy("P101", "Sleeper"));
-        myTrain.addBogy(new PassengerBogy("P102", "Sleeper"));
-        myTrain.addBogy(new PassengerBogy("P201", "AC Chair"));
-        myTrain.addBogy(new GoodsBogy("G301", "Cylindrical"));
-        myTrain.addBogy(new GoodsBogy("G302", "Cylindrical"));
-        myTrain.addBogy(new GoodsBogy("G401", "Rectangular"));
+        // Adding diverse units
+        myTrain.addBogy(new PassengerBogy("S1", 72));
+        myTrain.addBogy(new PassengerBogy("A1", 56));
+        myTrain.addBogy(new GoodsBogy("G1", 1000)); // 1000kg load
+        myTrain.addBogy(new GoodsBogy("G2", 500));  // 500kg load
 
-        // Run Grouping Logic
-        myTrain.generateCategorizedReport();
+        // Perform Reduction
+        myTrain.calculateTotalTrainCapacity();
     }
 }
