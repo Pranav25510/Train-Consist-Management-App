@@ -1,55 +1,70 @@
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
+class GoodsBogy {
+    private String bogyID;
+    private String shape; // "Cylindrical" or "Rectangular"
+    private String cargoType; // "Liquid", "Gas", "Solid"
+
+    public GoodsBogy(String bogyID, String shape, String cargoType) {
+        this.bogyID = bogyID;
+        this.shape = shape;
+        this.cargoType = cargoType;
+    }
+
+    public String getShape() { return shape; }
+    public String getCargoType() { return cargoType; }
+    public String getBogyID() { return bogyID; }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] Shape: %-12s | Cargo: %s", bogyID, shape, cargoType);
+    }
+}
 
 public class TrainApp {
+    private List<GoodsBogy> goodsConsist = new ArrayList<>();
 
-    // Regex Patterns
-    private static final String TRAIN_ID_REGEX = "^TRN-\\d{4}$";
-    private static final String CARGO_CODE_REGEX = "^[A-Z]{3}\\d{2}$";
+    // UC12: Define Safety Rules using Predicates (Functional Interface)
+    // Rule: Cylindrical bogies MUST carry Liquids or Gases only.
+    private static final Predicate<GoodsBogy> isSafetyCompliant = bogy -> {
+        if (bogy.getShape().equalsIgnoreCase("Cylindrical")) {
+            return bogy.getCargoType().equalsIgnoreCase("Liquid") ||
+                    bogy.getCargoType().equalsIgnoreCase("Gas");
+        }
+        // Rectangular bogies are for Solids
+        return bogy.getCargoType().equalsIgnoreCase("Solid");
+    };
 
-    /**
-     * UC11: Validates the Train ID format
-     * @param trainID The ID to check
-     * @return true if matches TRN-XXXX
-     */
-    public boolean isValidTrainID(String trainID) {
-        return Pattern.matches(TRAIN_ID_REGEX, trainID);
-    }
-
-    /**
-     * UC11: Validates the Cargo Code format
-     * @param cargoCode The code to check
-     * @return true if matches AAANN
-     */
-    public boolean isValidCargoCode(String cargoCode) {
-        Pattern pattern = Pattern.compile(CARGO_CODE_REGEX);
-        Matcher matcher = pattern.matcher(cargoCode);
-        return matcher.matches();
-    }
-
-    public void processNewTrain(String id) {
-        if (isValidTrainID(id)) {
-            System.out.println("SUCCESS: Train [" + id + "] registered in the system.");
+    public void addGoodsBogy(GoodsBogy bogy) {
+        // Enforce the safety rule using the Predicate
+        if (isSafetyCompliant.test(bogy)) {
+            goodsConsist.add(bogy);
+            System.out.println("SAFETY CHECK PASSED: Bogy " + bogy.getBogyID() + " attached.");
         } else {
-            System.err.println("VALIDATION ERROR: Invalid Train ID format [" + id + "]. Expected: TRN-1234");
+            System.err.println("SAFETY VIOLATION: Bogy " + bogy.getBogyID() +
+                    " (" + bogy.getShape() + ") cannot carry " + bogy.getCargoType() + "!");
         }
     }
 
+    public void checkEntireConsist() {
+        System.out.println("\n--- Current Goods Consist Compliance ---");
+        goodsConsist.forEach(System.out::println);
+    }
+
     public static void main(String[] args) {
-        TrainApp app = new TrainApp();
+        TrainApp yard = new TrainApp();
 
-        // Testing Train IDs
-        System.out.println("--- Validating Train IDs ---");
-        app.processNewTrain("TRN-1234"); // Valid
-        app.processNewTrain("TRN1234");  // Invalid (missing hyphen)
-        app.processNewTrain("TRN-12A3"); // Invalid (contains letter)
+        // Case 1: Valid Cylindrical Bogy (carrying Oil/Liquid)
+        yard.addGoodsBogy(new GoodsBogy("GB-001", "Cylindrical", "Liquid"));
 
-        // Testing Cargo Codes
-        System.out.println("\n--- Validating Cargo Codes ---");
-        String code1 = "OIL01";
-        String code2 = "oil01";
+        // Case 2: Invalid Assignment (Cylindrical carrying Coal/Solid)
+        yard.addGoodsBogy(new GoodsBogy("GB-002", "Cylindrical", "Solid"));
 
-        System.out.println(code1 + " is valid? " + app.isValidCargoCode(code1)); // true
-        System.out.println(code2 + " is valid? " + app.isValidCargoCode(code2)); // false (lowercase)
+        // Case 3: Valid Rectangular Bogy (carrying Grain/Solid)
+        yard.addGoodsBogy(new GoodsBogy("GB-003", "Rectangular", "Solid"));
+
+        yard.checkEntireConsist();
     }
 }
