@@ -1,29 +1,29 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 abstract class Bogy {
     protected String bogyID;
-    protected String type;
-    protected int capacity;
+    protected String type; // e.g., Sleeper, AC Chair, Rectangular, Cylindrical
 
-    public Bogy(String bogyID, String type, int capacity) {
+    public Bogy(String bogyID, String type) {
         this.bogyID = bogyID;
         this.type = type;
-        this.capacity = capacity;
     }
 
-    public int getCapacity() { return capacity; }
     public String getType() { return type; }
 
     @Override
     public String toString() {
-        return String.format("[%s] %-15s | Capacity: %d", bogyID, type, capacity);
+        return "ID: " + bogyID;
     }
 }
 
 class PassengerBogy extends Bogy {
-    public PassengerBogy(String id, String type, int cap) { super(id, type, cap); }
+    public PassengerBogy(String id, String type) { super(id, type); }
+}
+
+class GoodsBogy extends Bogy {
+    public GoodsBogy(String id, String type) { super(id, type); }
 }
 
 public class TrainApp {
@@ -31,35 +31,35 @@ public class TrainApp {
 
     public void addBogy(Bogy b) { consist.add(b); }
 
-    // UC8: Stream API to filter high-capacity bogies
-    public void displayHighCapacityBogies(int threshold) {
-        System.out.println("\n--- Filtering Bogies: Capacity > " + threshold + " ---");
+    // UC9: Grouping bogies into a Map by their type
+    public void generateCategorizedReport() {
+        System.out.println("\n--- Generating Categorized Consist Report ---");
 
-        consist.stream()                                      // 1. Source
-                .filter(b -> b.getCapacity() > threshold)      // 2. Intermediate Operation (Filter)
-                .forEach(System.out::println);                // 3. Terminal Operation
-    }
+        // The groupingBy collector organizes elements into a Map
+        Map<String, List<Bogy>> groupedBogies = consist.stream()
+                .collect(Collectors.groupingBy(Bogy::getType));
 
-    // UC8: Stream API to get a specific sub-list (e.g., only Sleepers)
-    public List<Bogy> getBogiesByType(String bogyType) {
-        return consist.stream()
-                .filter(b -> b.getType().equalsIgnoreCase(bogyType))
-                .collect(Collectors.toList());          // Terminal operation to store results
+        // Iterating through the Map to display groups
+        groupedBogies.forEach((type, list) -> {
+            System.out.println("Category: [" + type.toUpperCase() + "]");
+            list.forEach(bogy -> System.out.println("  |-- " + bogy));
+            System.out.println("  Total Count: " + list.size());
+            System.out.println();
+        });
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        myTrain.addBogy(new PassengerBogy("P101", "Sleeper", 72));
-        myTrain.addBogy(new PassengerBogy("P102", "AC Chair", 56));
-        myTrain.addBogy(new PassengerBogy("P103", "First Class", 24));
-        myTrain.addBogy(new PassengerBogy("P104", "General", 90));
+        // Adding a mix of Passenger and Goods Bogies
+        myTrain.addBogy(new PassengerBogy("P101", "Sleeper"));
+        myTrain.addBogy(new PassengerBogy("P102", "Sleeper"));
+        myTrain.addBogy(new PassengerBogy("P201", "AC Chair"));
+        myTrain.addBogy(new GoodsBogy("G301", "Cylindrical"));
+        myTrain.addBogy(new GoodsBogy("G302", "Cylindrical"));
+        myTrain.addBogy(new GoodsBogy("G401", "Rectangular"));
 
-        // Use Case: Find big bogies for a holiday rush
-        myTrain.displayHighCapacityBogies(60);
-
-        // Use Case: Find all Sleepers for a night journey report
-        System.out.println("\nSleeper Bogie Report:");
-        myTrain.getBogiesByType("Sleeper").forEach(System.out::println);
+        // Run Grouping Logic
+        myTrain.generateCategorizedReport();
     }
 }
