@@ -1,5 +1,6 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.Set;
 
 // Base Abstract Class
 abstract class Bogy {
@@ -18,82 +19,68 @@ abstract class Bogy {
 
 // Passenger Bogy implementation
 class PassengerBogy extends Bogy {
-    private String category; // Sleeper, AC Chair, First Class
-    private int capacity;
+    private String category;
 
-    public PassengerBogy(String bogyID, String category, int capacity) {
+    public PassengerBogy(String bogyID, String category) {
         super(bogyID);
         this.category = category;
-        this.capacity = capacity;
     }
 
     @Override
     public void displayInfo() {
-        System.out.println("Bogy ID: " + bogyID + " | Category: " + category + " | Capacity: " + capacity);
+        System.out.print("[" + bogyID + ":" + category + "]");
     }
 }
 
 public class TrainApp {
-    // The 'consist' is managed via an ArrayList for dynamic resizing
-    private List<Bogy> consist = new ArrayList<>();
+    // UC4: Using LinkedList to model the physical chain of the train
+    private LinkedList<Bogy> consist = new LinkedList<>();
+    // Keeping the Set for uniqueness validation
+    private Set<String> registeredIDs = new HashSet<>();
 
-    // UC2: Operation - Add Bogy
-    public void addBogy(Bogy bogy) {
-        consist.add(bogy);
-        System.out.println("Added Bogy: " + bogy.getBogyID());
-    }
-
-    // UC2: Operation - Remove Bogy by ID
-    public void removeBogy(String id) {
-        boolean removed = consist.removeIf(b -> b.getBogyID().equalsIgnoreCase(id));
-        if (removed) {
-            System.out.println("Bogy " + id + " has been detached from the consist.");
+    // UC4: Operation - Attach Bogy to the end of the train
+    public void attachBogy(Bogy bogy) {
+        if (registeredIDs.add(bogy.getBogyID())) {
+            consist.addLast(bogy); // Physically adding it to the end of the chain
+            System.out.println("Coupled " + bogy.getBogyID() + " at the rear.");
         } else {
-            System.out.println("Error: Bogy " + id + " not found.");
+            System.out.println("Error: Bogy " + bogy.getBogyID() + " is already in the consist.");
         }
     }
 
-    // UC2: Operation - Check if Bogy exists
-    public void findBogy(String id) {
-        boolean exists = false;
-        for (Bogy b : consist) {
-            if (b.getBogyID().equalsIgnoreCase(id)) {
-                System.out.print("Bogy Found: ");
-                b.displayInfo();
-                exists = true;
-                break;
-            }
+    // UC4: Operation - Attach Bogy right after the engine (at the front)
+    public void attachPriorityBogy(Bogy bogy) {
+        if (registeredIDs.add(bogy.getBogyID())) {
+            consist.addFirst(bogy);
+            System.out.println("Priority Coupling: " + bogy.getBogyID() + " added behind the engine.");
         }
-        if (!exists) System.out.println("Bogy " + id + " is not part of this train.");
     }
 
     public void showConsist() {
-        System.out.println("\n--- Current Train Consist ---");
-        if (consist.isEmpty()) {
-            System.out.println("The engine is running solo (Empty Consist).");
-        } else {
-            consist.forEach(Bogy::displayInfo);
+        System.out.println("\n--- Physical Train Formation ---");
+        System.out.print("ENGINE <-> ");
+        for (int i = 0; i < consist.size(); i++) {
+            consist.get(i).displayInfo();
+            if (i < consist.size() - 1) System.out.print(" <-> ");
         }
-        System.out.println("-----------------------------\n");
+        System.out.println(" <-> GUARD_COACH");
+        System.out.println("Total Bogies: " + consist.size() + "\n");
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        // 1. Dynamically Adding Passenger Bogies
-        myTrain.addBogy(new PassengerBogy("S1", "Sleeper", 72));
-        myTrain.addBogy(new PassengerBogy("A1", "AC Chair", 56));
-        myTrain.addBogy(new PassengerBogy("F1", "First Class", 24));
+        // Adding bogies in a specific sequence
+        myTrain.attachBogy(new PassengerBogy("S1", "Sleeper"));
+        myTrain.attachBogy(new PassengerBogy("S2", "Sleeper"));
 
+        // A VIP AC coach arrives and needs to be near the engine
+        myTrain.attachPriorityBogy(new PassengerBogy("A1", "AC-First"));
+
+        // Displaying the formation
         myTrain.showConsist();
 
-        // 2. Finding a specific Bogy
-        myTrain.findBogy("A1");
-
-        // 3. Removing a Bogy (e.g., detaching at a junction)
-        myTrain.removeBogy("S1");
-
-        // 4. Final Display
-        myTrain.showConsist();
+        // Attempting a duplicate (still blocked by our Set logic)
+        myTrain.attachBogy(new PassengerBogy("S1", "Sleeper"));
     }
 }
