@@ -1,67 +1,71 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 abstract class Bogy {
     protected String bogyID;
+    protected String type;
     protected int capacity;
 
-    public Bogy(String bogyID, int capacity) {
+    public Bogy(String bogyID, String type, int capacity) {
         this.bogyID = bogyID;
+        this.type = type;
         this.capacity = capacity;
     }
 
-    public String getBogyID() { return bogyID; }
     public int getCapacity() { return capacity; }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] %-15s | Capacity: %d", bogyID, type, capacity);
+    }
 }
 
 class PassengerBogy extends Bogy {
-    public PassengerBogy(String id, int cap) { super(id, cap); }
-}
-
-class GoodsBogy extends Bogy {
-    public GoodsBogy(String id, int cap) { super(id, cap); }
+    public PassengerBogy(String id, String type, int cap) { super(id, type, cap); }
 }
 
 public class TrainApp {
-    // UC6: Key = Bogy ID, Value = Capacity
-    private Map<String, Integer> capacityManifest = new HashMap<>();
+    private List<Bogy> consist = new ArrayList<>();
 
-    public void registerBogy(Bogy bogy) {
-        // Associate the ID with its capacity in the Map
-        capacityManifest.put(bogy.getBogyID(), bogy.getCapacity());
-        System.out.println("Registered " + bogy.getBogyID() + " with capacity: " + bogy.getCapacity());
+    public void addBogy(Bogy b) { consist.add(b); }
+
+    // UC7: Sorting logic using a Comparator
+    public void sortBogiesByCapacity() {
+        System.out.println("\n--- Sorting Bogies by Capacity (High to Low) ---");
+
+        // Comparator: Compares two bogies and returns (b2 - b1) for descending order
+        Comparator<Bogy> capacityComparator = new Comparator<Bogy>() {
+            @Override
+            public int compare(Bogy b1, Bogy b2) {
+                return Integer.compare(b2.getCapacity(), b1.getCapacity());
+            }
+        };
+
+        Collections.sort(consist, capacityComparator);
     }
 
-    public void getBogyCapacity(String id) {
-        // Efficient lookup using the Key
-        if (capacityManifest.containsKey(id)) {
-            System.out.println("Bogy " + id + " Capacity: " + capacityManifest.get(id));
-        } else {
-            System.out.println("Bogy " + id + " not found in manifest.");
+    public void displayConsist() {
+        for (Bogy b : consist) {
+            System.out.println(b);
         }
-    }
-
-    public void calculateTotalCapacity() {
-        int total = 0;
-        // Iterating through all values in the Map
-        for (int cap : capacityManifest.values()) {
-            total += cap;
-        }
-        System.out.println("\n--- Total Train Capacity: " + total + " units ---");
     }
 
     public static void main(String[] args) {
         TrainApp myTrain = new TrainApp();
 
-        // Registering various types of bogies
-        myTrain.registerBogy(new PassengerBogy("P-101", 72));
-        myTrain.registerBogy(new PassengerBogy("P-102", 56));
-        myTrain.registerBogy(new GoodsBogy("G-501", 1000)); // 1000kg load
+        // Adding bogies with different capacities
+        myTrain.addBogy(new PassengerBogy("P101", "Sleeper", 72));
+        myTrain.addBogy(new PassengerBogy("P102", "AC Chair", 56));
+        myTrain.addBogy(new PassengerBogy("P103", "First Class", 24));
+        myTrain.addBogy(new PassengerBogy("P104", "General", 90));
 
-        // Instant lookup
-        myTrain.getBogyCapacity("P-101");
+        System.out.println("Original Consist:");
+        myTrain.displayConsist();
 
-        // Analytics
-        myTrain.calculateTotalCapacity();
+        // Perform sorting
+        myTrain.sortBogiesByCapacity();
+        myTrain.displayConsist();
     }
 }
