@@ -25,10 +25,6 @@ class PassengerBogie extends Bogie {
         this.seatCapacity = seatCapacity;
     }
 
-    public String getType() {
-        return type;
-    }
-
     public int getSeatCapacity() {
         return seatCapacity;
     }
@@ -40,17 +36,13 @@ class PassengerBogie extends Bogie {
     }
 }
 
-// Goods Bogie
+// Goods Bogie (not used in seat calculation but part of system)
 class GoodsBogie extends Bogie {
     String cargoType;
 
     public GoodsBogie(String id, String cargoType) {
         super(id);
         this.cargoType = cargoType;
-    }
-
-    public String getCargoType() {
-        return cargoType;
     }
 
     @Override
@@ -68,20 +60,14 @@ class TrainConsistService {
         this.bogies = bogies;
     }
 
-    // UC9: Group bogies by category (Passenger Type / Cargo Type)
-    public Map<String, List<Bogie>> groupBogiesByType() {
+    // UC10: Total seat calculation using reduce()
+    public int getTotalSeatCapacity() {
 
         return bogies.stream()
-                .collect(Collectors.groupingBy(b -> {
-
-                    if (b instanceof PassengerBogie) {
-                        return "PASSENGER - " + ((PassengerBogie) b).getType();
-                    } else if (b instanceof GoodsBogie) {
-                        return "GOODS - " + ((GoodsBogie) b).getCargoType();
-                    } else {
-                        return "UNKNOWN";
-                    }
-                }));
+                .filter(b -> b instanceof PassengerBogie)
+                .map(b -> (PassengerBogie) b)
+                .map(PassengerBogie::getSeatCapacity)
+                .reduce(0, (a, b) -> a + b);
     }
 }
 
@@ -101,18 +87,13 @@ public class UseCase8TrainConsistMgmtTest {
         // Goods bogies
         bogies.add(new GoodsBogie("G1", "Coal"));
         bogies.add(new GoodsBogie("G2", "Oil"));
-        bogies.add(new GoodsBogie("G3", "Grain"));
 
         TrainConsistService service = new TrainConsistService(bogies);
 
-        // UC9: Grouping
-        Map<String, List<Bogie>> grouped = service.groupBogiesByType();
+        System.out.println("=== Train Consist Summary ===");
 
-        System.out.println("=== Grouped Bogies by Type ===");
+        int totalSeats = service.getTotalSeatCapacity();
 
-        grouped.forEach((key, value) -> {
-            System.out.println("\n" + key);
-            value.forEach(System.out::println);
-        });
+        System.out.println("Total Passenger Seat Capacity: " + totalSeats);
     }
 }
